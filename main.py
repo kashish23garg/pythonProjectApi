@@ -40,7 +40,7 @@ async def read_choices(question_id: int, db: db_dependency):
         raise HTTPException (status_code = 404, detail= 'Choices is not found')
     return result
 
-# --- DELETE a specific question ---
+
 @app.delete("/questions/{question_id}")
 async def delete_question(question_id: int, db: db_dependency):
     db_question = db.query(models.Questions).filter(models.Questions.id == question_id).first()
