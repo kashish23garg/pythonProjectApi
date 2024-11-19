@@ -17,8 +17,6 @@ class QuestionBase(BaseModel):
     question_text:str
     choices: List[ChoiceBase]
 
-
-
 def get_db():
     db = SessionLocal()
     try:
@@ -49,37 +47,30 @@ async def delete_question(question_id: int, db: db_dependency):
     if not db_question:
         raise HTTPException(status_code=404, detail="Question not found")
 
-    # Delete all choices associated with this question
     db.query(models.Choices).filter(models.Choices.question_id == question_id).delete()
-    db.commit()  # Commit deletion of choices
+    db.commit()
 
-    # Delete the question itself
     db.delete(db_question)
-    db.commit()  # Commit deletion of the question
+    db.commit()
 
     return {"message": "Question and associated choices deleted successfully"}
 
 
 @app.put("/questions/{question_id}")
 async def update_question(question_id: int, question: QuestionBase, db: db_dependency):
-    # Fetch the existing question by ID
+
     db_question = db.query(models.Questions).filter(models.Questions.id == question_id).first()
 
-    # If the question doesn't exist, return a 404 error
     if not db_question:
         raise HTTPException(status_code=404, detail="Question not found")
 
-    # Update the question text
+
     db_question.question_text = question.question_text
-    db.commit()  # Commit the changes to the question
-    db.refresh(db_question)  # Refresh the object to reflect the changes
+    db.commit()
+    db.refresh(db_question)
 
-    # Now, let's update the choices related to this question
-    # First, we remove all the old choices for this question
     db.query(models.Choices).filter(models.Choices.question_id == question_id).delete()
-    db.commit()  # Commit the deletion of old choices
-
-    # Add new choices from the request body
+    db.commit()
     for choice in question.choices:
         db_choice = models.Choices(
             choice_text=choice.choice_text,
@@ -88,13 +79,13 @@ async def update_question(question_id: int, question: QuestionBase, db: db_depen
         )
         db.add(db_choice)
 
-    db.commit()  # Commit the addition of new choices
+    db.commit()
     # tried returning the complete response with question and choice using response_model=QuestionBase but facing challenges so just return the question
     result = db.query(models.Questions).filter(models.Questions.id == db_question.id).first()
     if not result:
         raise HTTPException(status_code=404, detail="Question is not found")
 
-    return db_question  # Return the updated question
+    return db_question
 
 @app.post("/questions/")
 async def create_questions(question: QuestionBase, db: db_dependency):
